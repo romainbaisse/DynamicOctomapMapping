@@ -1,0 +1,6 @@
+<launch>
+	<include file="$(find octomap_server)/launch/octomap_mapping.launch"/>
+	
+	<node pkg="my_pkg" type="DynamicOctomapMapping_node" name="DynamicOctomapMapping_node"/>
+	<node pkg="my_pkg" type="MoveArm_node" name="MoveArm_node"/>
+</launch>

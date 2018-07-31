@@ -21,7 +21,13 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
+#include <Eigen/StdVector>
 
+
+#include <Eigen/Geometry>
+#include <Eigen/Dense>
+#include <cmath>
+#include <iostream>
 
 class DynamicOctomapMapping{
 
@@ -112,7 +118,13 @@ class DynamicOctomapMapping{
         void updateNodesInBBX(const octomap::point3d& min,const octomap::point3d& max, bool occupied);
 
         // compute the position of the camera on a sphere centered on the CBBX
-        void computeNextCameraPose(octomap::point3d centerBBX, double* pos);
+        geometry_msgs::Point computeNextCameraPose();
+
+        // compute the orientation of the camera 
+        geometry_msgs::Quaternion computeNextCameraOrientation();
+
+
+        void publishNextCameraPoseandOrientation();
 
 }; 
 

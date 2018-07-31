@@ -17,6 +17,8 @@
 #include <vector>
 #include <string>
 #include <tf/transform_listener.h>
+#include <tf/tf.h>
+
 
 #include <moveit_msgs/RobotState.h>
 #include <moveit_msgs/DisplayRobotState.h>
@@ -24,6 +26,15 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/robot_state.h>
+#include <rviz_visual_tools/rviz_visual_tools.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
+
+#include <moveit_msgs/DisplayTrajectory.h>
+
+#include <moveit_msgs/AttachedCollisionObject.h>
+#include <moveit_msgs/CollisionObject.h>
+
+
 
 class MoveArm{
 
@@ -37,17 +48,13 @@ class MoveArm{
 
         ros::Publisher  minimal_publisher_;
 
-        geometry_msgs::Pose start_pose;
-
-		geometry_msgs::Pose next_pose;
-
-		geometry_msgs::Point msg_;
+		geometry_msgs::Pose msg_;
 
         void initializeSubscribers(); 
 
         void initializePublishers();
 
-        void subscriberCallback(const geometry_msgs::Point & msg); 
+        void subscriberCallback(const geometry_msgs::Pose & msg); 
 
 		void move();
 		

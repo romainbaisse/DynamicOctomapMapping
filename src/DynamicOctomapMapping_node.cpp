@@ -7,10 +7,11 @@
 #include <octomap_msgs/Octomap.h>
 #include <octomap/math/Vector3.h>
 #include <string>
-
+#include <tf/tf.h>
 
 using namespace std;
 using namespace octomap;
+using namespace Eigen;
 
 
 
@@ -32,10 +33,10 @@ DynamicOctomapMapping::DynamicOctomapMapping(ros::NodeHandle* nodehandle,  point
     lastLayerLevel = 0.0;
     resolution = 0.05;
     sphereRadius = 1.1;
-    lastBestNode = octomath::Vector3(-0.9, -0.25,-0.055);
+    lastBestNode = octomath::Vector3(-0.9, -0.25,0.1);
     lastCameraPose = octomath::Vector3(0.2,0.2,0.2);
     computeCBBX();
-
+    computeNextCameraOrientation();
     //Some tests
 
     //generateFakeOctree(0,2,0,2,0,0.1);
@@ -61,7 +62,7 @@ void DynamicOctomapMapping::initializeSubscribers(){
 void DynamicOctomapMapping::initializePublishers(){
 
     ROS_INFO("Initializing Publishers");
-    minimal_publisher_ = nh_.advertise<geometry_msgs::Point>("my_topic2", 1, true); 
+    minimal_publisher_ = nh_.advertise<geometry_msgs::Pose>("my_topic2", 1, true); 
 }
 
 
@@ -70,7 +71,7 @@ void DynamicOctomapMapping::subscriberCallback(const octomap_msgs::Octomap msg) 
     AbstractOcTree* tree = octomap_msgs::binaryMsgToMap (msg);
     tree_ = dynamic_cast<OcTree*>(tree);
     find_smallest_occupancy_node();
-    computeNextCameraPose(CBBX, pos);
+    publishNextCameraPoseandOrientation();
 }
 
 
@@ -150,13 +151,14 @@ void DynamicOctomapMapping::find_smallest_occupancy_node(){
         if (tree_->isNodeOccupied(*it)){     
             double z = it.getZ();
             double occ = it->getOccupancy();
-            if (isNewLayer(z)){
+            if (isNewLayer(z) /*&& ((z-lastLayerLevel) <=(2*resolution))*/){
+                lastLayerLevel = z;
                 if(occ < minOccupancy){
                     minOccupancy = occ;
                     newBestNode = it.getCoordinate();
                 }
                 else if(occ == minOccupancy){
-                    if(difference(newBestNode,it.getCoordinate()) > minDistance)
+                    //if(difference(newBestNode,it.getCoordinate()) > minDistance)
                         newBestNode = it.getCoordinate();
                 }
             }
@@ -167,16 +169,16 @@ void DynamicOctomapMapping::find_smallest_occupancy_node(){
 }
 
 
-void DynamicOctomapMapping::computeNextCameraPose(octomap::point3d centerBBX, double* pos){
+geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
     geometry_msgs::Point point;
     double sol, x1, x2, x, y, z;
     double x0 = lastBestNode.x();
     double y0 = lastBestNode.y();
     double z0 = lastBestNode.z();
 
-    double xc = centerBBX.x();
-    double yc = centerBBX.y();
-    double zc = centerBBX.z();
+    double xc = CBBX.x();
+    double yc = CBBX.y();
+    double zc = CBBX.z();
 
     double Vx = x0-xc;
     double Vy = y0-yc;
@@ -224,12 +226,105 @@ void DynamicOctomapMapping::computeNextCameraPose(octomap::point3d centerBBX, do
     point.x = x;
     point.y = y;
     point.z = z;
+    lastCameraPose.x() = point.x;
+    lastCameraPose.y() = point.y;
+    lastCameraPose.z() = point.z;
 
-    minimal_publisher_.publish(point);
+    //minimal_publisher_.publish(point);
     sleep(10);
     cout << "new camera position = ( " << x << "," << y << "," << z << ")" << endl;
+
+    return point;
 }
 
+
+geometry_msgs::Quaternion DynamicOctomapMapping::computeNextCameraOrientation(){
+
+    geometry_msgs::Quaternion orientation;
+    //Roll pitch and yaw in Radians
+    float pitch, roll, yaw, alpha, beta, gamma;
+
+    double xcam = lastCameraPose.x();
+    double ycam = lastCameraPose.y();
+    double zcam = lastCameraPose.z();
+
+    double xc = CBBX.x();
+    double yc = CBBX.y();
+    double zc = CBBX.z();
+
+    /*double xcam = -0.32;
+    double ycam = 0.9;
+    double zcam = 0.69;
+
+    double xc = -1.2;
+    double yc = 0;
+    double zc = 0.1;
+*/
+
+
+    roll = 0;
+
+    alpha= acos(   ((-xc*(xcam-xc)) - (yc*(ycam - yc)))/ (sqrt(((xcam - xc)*(xcam - xc))+((ycam - yc)*(ycam - yc))) * sqrt((xc*xc) + (yc*yc)) ));
+
+
+    if(ycam <= 0){
+        yaw = (3.14 - alpha);
+    }
+    else {
+        yaw = -(3.14 - alpha);
+
+    }
+
+    pitch = acos( ( ((xcam-xc)*(xcam-xc)) + ((ycam - yc)*(ycam - yc)) )/  (  sqrt( ((xcam - xc)*(xcam - xc)) + ((ycam - yc)*(ycam - yc)) + ((zcam - zc)*(zcam - zc)) )  * ( sqrt( ((xcam - xc)*(xcam - xc))+((ycam - yc)*(ycam - yc)) ) )));
+
+    cout << "alpha = "<< alpha <<"\npitch = " << pitch << "\nroll = " << roll << "\nyaw = " << yaw << endl;
+/*
+    Quaternionf q;
+    q = AngleAxisf(roll, Vector3f::UnitX())
+        * AngleAxisf(pitch, Vector3f::UnitY())
+        * AngleAxisf(yaw, Vector3f::UnitZ());
+
+    orientation.x = q.x();
+    orientation.y = q.y();
+    orientation.z = q.z();
+    orientation.w = q.w();*/
+
+
+
+    orientation = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch,yaw);
+/*    double c1,s1, c2,s2,c3,s3;
+
+    c1 = cos(pitch/2);
+    c2 = cos(yaw/2);
+    c3 = cos(roll/2);
+    s1 = sin(pitch/2);
+    s2 = sin(yaw/2);
+    s3 = sin(roll/2);
+
+    orientation.x = s1*s2*c3 + c1*c2*s3;
+
+    orientation.y = s1*c2*c3 + c1*s2*s3;
+    orientation.z = c1*s2*c3 - s1*c2*s3;
+    orientation.w = c1*c2*c3 - s1*s2*s3;
+
+*/
+    std::cout << "ORIENTATION = " << std::endl << orientation << std::endl;
+
+
+
+    //std::cout << "Quaternion" << std::endl << orientation << std::endl;
+    return orientation;
+}
+
+
+void DynamicOctomapMapping::publishNextCameraPoseandOrientation(){
+        geometry_msgs::Pose pose;
+        pose.position = computeNextCameraPose();
+        pose.orientation = computeNextCameraOrientation();
+
+        minimal_publisher_.publish(pose);
+
+}
 
 bool DynamicOctomapMapping::isNewLayer(double layer){
 
@@ -337,8 +432,8 @@ int main(int argc, char** argv)
     // point3d BBXMin = point3d(-1.5,-0.25,-0.055);
     // point3d BBXMax = point3d(-0.9,0.25,0.2);
 
-    point3d BBXMin = point3d(-1.85,-0.4,0.10);
-    point3d BBXMax = point3d(-0.9,0.4,0.55);
+    point3d BBXMin = point3d(-1.5,-0.45,0.10);
+    point3d BBXMax = point3d(-0.9,0.2,0.15);
 
 
     ROS_INFO("main: instantiating an object of type DynamicOctomapMapping");

@@ -16,6 +16,8 @@ MoveArm::MoveArm(ros::NodeHandle* nodehandle):nh_(*nodehandle){
     msg_.position.x = -0.5;
     msg_.position.y = 0.45;
     msg_.position.z = 0.3;
+    msg_.orientation = tf::createQuaternionMsgFromYaw(-3.14);
+    cout << "orientation : " << msg_.orientation << endl;
 
     move2();
 
@@ -69,12 +71,11 @@ void MoveArm::move(){
 
     ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
     // add collisionh object
-/*
-    moveit_msgs::CollisionObject collision_object;
-    collision_object.header.frame_id = move_group.getPlanningFrame();
 
-    collision_object.id = "box1";
+    /*moveit_msgs::CollisionObject kuka_bbx;
+    kuka_bbx.header.frame_id = move_group.getPlanningFrame();
 
+    kuka_bbx.id = "box1";
 
     shape_msgs::SolidPrimitive primitive;
     primitive.type = primitive.BOX;
@@ -89,19 +90,20 @@ void MoveArm::move(){
     box_pose.position.y = 0;
     box_pose.position.z = 0.64;
 
-    collision_object.primitives.push_back(primitive);
-    collision_object.primitive_poses.push_back(box_pose);
-    collision_object.operation = collision_object.ADD;
+    kuka_bbx.primitives.push_back(primitive);
+    kuka_bbx.primitive_poses.push_back(box_pose);
+    kuka_bbx.operation = kuka_bbx.ADD;
 
-    std::vector<moveit_msgs::CollisionObject> collision_objects;
-    collision_objects.push_back(collision_object);
+    std::vector<moveit_msgs::CollisionObject> kuka_bbxs;
+    kuka_bbxs.push_back(kuka_bbx);
 
-    planning_scene_interface.addCollisionObjects(collision_objects);
+    planning_scene_interface.addCollisionObjects(kuka_bbxs);
     //visual_tools.publishText(text_pose, "Add object", WHITE, XLARGE);
     visual_tools.trigger();
     //visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to once the collision object appears in RViz");
-
 */
+
+
 
 
     robot_state::RobotState start_state(*move_group.getCurrentState());
@@ -126,10 +128,6 @@ void MoveArm::move(){
     target_pose.orientation.z = msg_.orientation.z;
     target_pose.orientation.w = msg_.orientation.w;
 
-/*
-    target_pose.position.x = -0.5;
-    target_pose.position.y = 0;
-    target_pose.position.z =0.8;*/
 
     cout <<" target_pose = " << target_pose << endl;
     waypoints.push_back(target_pose);  // up and left
@@ -142,23 +140,13 @@ void MoveArm::move(){
     double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
     ROS_INFO_NAMED("tutorial", "Visualizing plan 4 (Cartesian path) (%.2f%% acheived)", fraction * 100.0);
 
-    /*visual_tools.deleteAllMarkers();
-    //visual_tools.publishText(text_pose, "Joint Space Goal", WHITE, XLARGE);
-    visual_tools.publishPath(waypoints, LIME_GREEN, SMALL);
-    for (std::size_t i = 0; i < waypoints.size(); ++i)
-        visual_tools.publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), SMALL);
-    visual_tools.trigger();
-*/
 
     plan.trajectory_ = trajectory;
     /*cout << "if the path looks good enter one key and then enter" << endl;
-
     string text;
     cin >> text;
-
     if(!text.empty()){
         move_group.execute(plan);
-
     }*/
     move_group.execute(plan);
 

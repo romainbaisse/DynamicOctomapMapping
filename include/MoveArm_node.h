@@ -46,13 +46,9 @@ class MoveArm{
 
         ros::Subscriber minimal_subscriber_; 
 
-        ros::Publisher  minimal_publisher_;
-
 		geometry_msgs::Pose msg_;
 
         void initializeSubscribers(); 
-
-        void initializePublishers();
 
         void subscriberCallback(const geometry_msgs::Pose & msg); 
 

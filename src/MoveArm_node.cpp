@@ -13,28 +13,19 @@ MoveArm::MoveArm(ros::NodeHandle* nodehandle):nh_(*nodehandle){
     
     // initializePublishers();
 
+    msg_.position.x = -0.5;
+    msg_.position.y = 0.45;
+    msg_.position.z = 0.3;
 
-        msg_.position.x = -0.5;
-        msg_.position.y = 0.45;
-        msg_.position.z = 0.3;
-        //msg_.orientation = tf::createQuaternionMsgFromRollPitchYaw(3.14,0.23579398,-2.57017186);
-
-        move2();
+    move2();
 
 }
 
 
 void MoveArm::initializeSubscribers(){
+
     ROS_INFO("Initializing Subscribers");
-    // souscrire à un topic qui lit le nouveau point où la caméra doit se déplacer
-    minimal_subscriber_ = nh_.subscribe("/my_topic2", 1, &MoveArm::subscriberCallback,this);  
-}
-
-
-void MoveArm::initializePublishers(){
-    ROS_INFO("Initializing Publishers");
-    // publishing on topic --> my_topic3
-    minimal_publisher_ = nh_.advertise<std_msgs::String>("my_topic3", 1, true); 
+    minimal_subscriber_ = nh_.subscribe("/new_camera_pose", 1, &MoveArm::subscriberCallback,this);  
 }
 
 

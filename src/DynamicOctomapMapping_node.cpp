@@ -36,7 +36,7 @@ DynamicOctomapMapping::DynamicOctomapMapping(ros::NodeHandle* nodehandle,  point
     lastBestNode = octomath::Vector3(-0.9, -0.25,0.1);
     lastCameraPose = octomath::Vector3(0.2,0.2,0.2);
     computeCBBX();
-    computeNextCameraOrientation();
+    //computeNextCameraOrientation();
     //Some tests
 
     //generateFakeOctree(0,2,0,2,0,0.1);
@@ -62,7 +62,7 @@ void DynamicOctomapMapping::initializeSubscribers(){
 void DynamicOctomapMapping::initializePublishers(){
 
     ROS_INFO("Initializing Publishers");
-    minimal_publisher_ = nh_.advertise<geometry_msgs::Pose>("my_topic2", 1, true); 
+    minimal_publisher_ = nh_.advertise<geometry_msgs::Pose>("new_camera_pose", 1, true); 
 }
 
 
@@ -158,7 +158,6 @@ void DynamicOctomapMapping::find_smallest_occupancy_node(){
                     newBestNode = it.getCoordinate();
                 }
                 else if(occ == minOccupancy){
-                    //if(difference(newBestNode,it.getCoordinate()) > minDistance)
                         newBestNode = it.getCoordinate();
                 }
             }
@@ -189,10 +188,7 @@ geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
     double c = (x0-xc)*(x0-xc) + (y0-yc)*(y0-yc) + (z0-zc)*(z0-zc) - (sphereRadius*sphereRadius);
 
     double delta =(b*b) - (4*a*c);
-    if(delta <0)
-        std::cout << "Solutions complexes" << std::endl;
-    else if(delta == 0){
-        std::cout << "une seule solution réelle" << std::endl;
+    if(delta == 0){
         sol = -b/(2*a);
     }
     else{
@@ -230,8 +226,6 @@ geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
     lastCameraPose.y() = point.y;
     lastCameraPose.z() = point.z;
 
-    //minimal_publisher_.publish(point);
-    sleep(10);
     cout << "new camera position = ( " << x << "," << y << "," << z << ")" << endl;
 
     return point;
@@ -252,77 +246,67 @@ geometry_msgs::Quaternion DynamicOctomapMapping::computeNextCameraOrientation(){
     double yc = CBBX.y();
     double zc = CBBX.z();
 
-    /*double xcam = -0.32;
-    double ycam = 0.9;
-    double zcam = 0.69;
-
-    double xc = -1.2;
-    double yc = 0;
-    double zc = 0.1;
-*/
-
 
     roll = 0;
 
     alpha= acos(   ((-xc*(xcam-xc)) - (yc*(ycam - yc)))/ (sqrt(((xcam - xc)*(xcam - xc))+((ycam - yc)*(ycam - yc))) * sqrt((xc*xc) + (yc*yc)) ));
-
 
     if(ycam <= 0){
         yaw = (3.14 - alpha);
     }
     else {
         yaw = -(3.14 - alpha);
-
     }
 
     pitch = acos( ( ((xcam-xc)*(xcam-xc)) + ((ycam - yc)*(ycam - yc)) )/  (  sqrt( ((xcam - xc)*(xcam - xc)) + ((ycam - yc)*(ycam - yc)) + ((zcam - zc)*(zcam - zc)) )  * ( sqrt( ((xcam - xc)*(xcam - xc))+((ycam - yc)*(ycam - yc)) ) )));
 
-    cout << "alpha = "<< alpha <<"\npitch = " << pitch << "\nroll = " << roll << "\nyaw = " << yaw << endl;
-/*
-    Quaternionf q;
-    q = AngleAxisf(roll, Vector3f::UnitX())
-        * AngleAxisf(pitch, Vector3f::UnitY())
-        * AngleAxisf(yaw, Vector3f::UnitZ());
+    //cout << "alpha = "<< alpha <<"\npitch = " << pitch << "\nroll = " << roll << "\nyaw = " << yaw << endl;
 
-    orientation.x = q.x();
-    orientation.y = q.y();
-    orientation.z = q.z();
-    orientation.w = q.w();*/
+//########################## 1st method ##########################//
+
+    // Quaternionf q;
+    // q = AngleAxisf(roll, Vector3f::UnitX())
+    //     * AngleAxisf(pitch, Vector3f::UnitY())
+    //     * AngleAxisf(yaw, Vector3f::UnitZ());
+
+    // orientation.x = q.x();
+    // orientation.y = q.y();
+    // orientation.z = q.z();
+    // orientation.w = q.w();
 
 
+//########################## 2nd method ##########################//
+
+    // double c1,s1, c2,s2,c3,s3;
+    // c1 = cos(pitch/2);
+    // c2 = cos(yaw/2);
+    // c3 = cos(roll/2);
+    // s1 = sin(pitch/2);
+    // s2 = sin(yaw/2);
+    // s3 = sin(roll/2);
+
+    // orientation.x = s1*s2*c3 + c1*c2*s3;
+    // orientation.y = s1*c2*c3 + c1*s2*s3;
+    // orientation.z = c1*s2*c3 - s1*c2*s3;
+    // orientation.w = c1*c2*c3 - s1*s2*s3;
+
+
+//########################## 3rd method ##########################//    --> the good one 
 
     orientation = tf::createQuaternionMsgFromRollPitchYaw(roll, pitch,yaw);
-/*    double c1,s1, c2,s2,c3,s3;
 
-    c1 = cos(pitch/2);
-    c2 = cos(yaw/2);
-    c3 = cos(roll/2);
-    s1 = sin(pitch/2);
-    s2 = sin(yaw/2);
-    s3 = sin(roll/2);
+    std::cout << "Orientation = " << std::endl << orientation << std::endl;
 
-    orientation.x = s1*s2*c3 + c1*c2*s3;
-
-    orientation.y = s1*c2*c3 + c1*s2*s3;
-    orientation.z = c1*s2*c3 - s1*c2*s3;
-    orientation.w = c1*c2*c3 - s1*s2*s3;
-
-*/
-    std::cout << "ORIENTATION = " << std::endl << orientation << std::endl;
-
-
-
-    //std::cout << "Quaternion" << std::endl << orientation << std::endl;
     return orientation;
 }
 
 
 void DynamicOctomapMapping::publishNextCameraPoseandOrientation(){
-        geometry_msgs::Pose pose;
-        pose.position = computeNextCameraPose();
-        pose.orientation = computeNextCameraOrientation();
+    geometry_msgs::Pose pose;
+    pose.position = computeNextCameraPose();
+    pose.orientation = computeNextCameraOrientation();
 
-        minimal_publisher_.publish(pose);
+    minimal_publisher_.publish(pose);
 
 }
 

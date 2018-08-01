@@ -32,11 +32,11 @@ void MoveArm::initializeSubscribers(){
 
 
 void MoveArm::subscriberCallback(const geometry_msgs::Pose &msg) {
-        cout << "position" << endl;
+        /*cout << "position" << endl;
         cout << "x = " << msg.position.x << "y = " << msg.position.y << "z = " << msg.position.z<< endl;
         cout << "orientation" << endl;
         cout << "x = " << msg.orientation.x << "y = " << msg.orientation.y << "z = " << msg.orientation.z << "w = "<< msg.orientation.w << endl;
-
+*/
         msg_.position.x = msg.position.x;
         msg_.position.y = msg.position.y;
         msg_.position.z = msg.position.z;
@@ -48,6 +48,8 @@ void MoveArm::subscriberCallback(const geometry_msgs::Pose &msg) {
 
 }
 
+
+ 
 
 void MoveArm::move(){
     //cout << "je suis la" << endl;
@@ -70,9 +72,11 @@ void MoveArm::move(){
     visual_tools.trigger();
 
     ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
-    // add collisionh object
+    
+    //###################################### add collision object ##################################################
 
-    /*moveit_msgs::CollisionObject kuka_bbx;
+    // kuka bbx 
+    moveit_msgs::CollisionObject kuka_bbx;
     kuka_bbx.header.frame_id = move_group.getPlanningFrame();
 
     kuka_bbx.id = "box1";
@@ -101,10 +105,39 @@ void MoveArm::move(){
     //visual_tools.publishText(text_pose, "Add object", WHITE, XLARGE);
     visual_tools.trigger();
     //visual_tools.prompt("Press 'next' in the RvizVisualToolsGui window to once the collision object appears in RViz");
-*/
+
+    // ground bbx 
+
+    moveit_msgs::CollisionObject groundlimit_bbx;
+    groundlimit_bbx.header.frame_id = move_group.getPlanningFrame();
+    groundlimit_bbx.id = "box2";
+
+    shape_msgs::SolidPrimitive primitive2;
+    primitive2.type = primitive2.BOX;
+    primitive2.dimensions.resize(3);
+    primitive2.dimensions[0] = 2.5;
+    primitive2.dimensions[1] = 2.5;
+    primitive2.dimensions[2] = 0.01;
+
+    geometry_msgs::Pose ground_pose;
+    ground_pose.orientation.w = 1.0;
+    ground_pose.position.x = 0;
+    ground_pose.position.y = 0;
+    ground_pose.position.z = -0.01;
+
+    groundlimit_bbx.primitives.push_back(primitive2);
+    groundlimit_bbx.primitive_poses.push_back(ground_pose);
+    groundlimit_bbx.operation = groundlimit_bbx.ADD;
+
+    std::vector<moveit_msgs::CollisionObject> groundlimit_bbxs;
+    groundlimit_bbxs.push_back(groundlimit_bbx);
+
+    planning_scene_interface.addCollisionObjects(groundlimit_bbxs);
+    //visual_tools.publishText(text_pose, "Add object", WHITE, XLARGE);
+    visual_tools.trigger();
 
 
-
+    //###################################### add collision object ##################################################
 
     robot_state::RobotState start_state(*move_group.getCurrentState());
     geometry_msgs::PoseStamped state = move_group.getCurrentPose();
@@ -128,11 +161,10 @@ void MoveArm::move(){
     target_pose.orientation.z = msg_.orientation.z;
     target_pose.orientation.w = msg_.orientation.w;
 
-
     cout <<" target_pose = " << target_pose << endl;
     waypoints.push_back(target_pose);  // up and left
 
-    move_group.setMaxVelocityScalingFactor(0.1);
+    move_group.setMaxVelocityScalingFactor(1);
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;

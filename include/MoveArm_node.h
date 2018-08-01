@@ -48,6 +48,8 @@ class MoveArm{
 
 		geometry_msgs::Pose msg_;
 
+        
+        
         void initializeSubscribers(); 
 
         void subscriberCallback(const geometry_msgs::Pose & msg); 

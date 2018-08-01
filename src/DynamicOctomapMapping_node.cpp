@@ -32,7 +32,7 @@ DynamicOctomapMapping::DynamicOctomapMapping(ros::NodeHandle* nodehandle,  point
     groundLevel= 0.10;
     lastLayerLevel = 0.0;
     resolution = 0.05;
-    sphereRadius = 1.1;
+    sphereRadius = 1;
     lastBestNode = octomath::Vector3(-0.9, -0.25,0.1);
     lastCameraPose = octomath::Vector3(0.2,0.2,0.2);
     computeCBBX();

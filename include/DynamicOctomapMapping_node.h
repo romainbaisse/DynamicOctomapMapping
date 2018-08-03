@@ -1,33 +1,37 @@
 
-#ifndef EXAMPLE_ROS_CLASS_H_
-#define EXAMPLE_ROS_CLASS_H_
+#ifndef DYNAMICOCTOMAPMAPPING_H_
+#define DYNAMICOCTOMAPMAPPING_H_
 
 #include <math.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <cmath>
+#include <iostream>
 
 #include <ros/ros.h> 
 #include <std_msgs/Bool.h> 
 #include <std_msgs/String.h>
 
+#include <tf/tf.h>
 #include <tf/transform_listener.h>
 
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
+#include <octomap/math/Vector3.h>
+
 #include <octomap_msgs/Octomap.h>
 #include <octomap_msgs/conversions.h>
+#include <octomap_msgs/GetOctomap.h>
 
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
+
 #include <Eigen/StdVector>
-
-
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
-#include <cmath>
-#include <iostream>
+
 
 class DynamicOctomapMapping{
 
@@ -44,7 +48,6 @@ class DynamicOctomapMapping{
         ros::Subscriber minimal_subscriber_; 
 
         ros::Publisher  minimal_publisher_;
-
         
         octomap::OcTree* tree_;
 
@@ -123,7 +126,7 @@ class DynamicOctomapMapping{
         // compute the orientation of the camera 
         geometry_msgs::Quaternion computeNextCameraOrientation();
 
-
+        // publish the position + orientation of the camera
         void publishNextCameraPoseandOrientation();
 
 }; 

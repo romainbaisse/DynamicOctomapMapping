@@ -1,18 +1,8 @@
 #include <DynamicOctomapMapping_node.h>
 
-#include <octomap_msgs/conversions.h>
-#include <octomap_msgs/GetOctomapRequest.h>
-#include <octomap_msgs/GetOctomapResponse.h>
-#include <octomap_msgs/GetOctomap.h>
-#include <octomap_msgs/Octomap.h>
-#include <octomap/math/Vector3.h>
-#include <string>
-#include <tf/tf.h>
-
 using namespace std;
 using namespace octomap;
 using namespace Eigen;
-
 
 
 DynamicOctomapMapping::DynamicOctomapMapping(ros::NodeHandle* nodehandle,  point3d min, point3d max):nh_(*nodehandle){   
@@ -31,9 +21,9 @@ DynamicOctomapMapping::DynamicOctomapMapping(ros::NodeHandle* nodehandle,  point
     BBXMax = max;
     groundLevel= 0.10;
     lastLayerLevel = 0.0;
-    resolution = 0.05;
+    resolution = 0.005;
     sphereRadius = 1;
-    lastBestNode = octomath::Vector3(-0.9, -0.25,0.1);
+    lastBestNode = octomath::Vector3(-0.9, -0.25, 0.1);
     lastCameraPose = octomath::Vector3(0.2,0.2,0.2);
     computeCBBX();
     //computeNextCameraOrientation();
@@ -51,6 +41,7 @@ void DynamicOctomapMapping::writeOctomapFile(){
 
     tree_->writeBinary("tree_test.bt");
 }
+
 
 void DynamicOctomapMapping::initializeSubscribers(){
 
@@ -86,7 +77,6 @@ void DynamicOctomapMapping::generateFakeOctree(double x_min, double x_max, doubl
         {
             for(float x = x_min; x <= x_max; x += resolution)
             {   
-
                 if (z==0){
                     tree_->updateNode(x, y, z, true);
                 }
@@ -106,6 +96,7 @@ void DynamicOctomapMapping::generateFakeOctree(double x_min, double x_max, doubl
     }
     cout << "fake octree generated" << endl;
 }
+
 
 void DynamicOctomapMapping::publishOctomap(){
 
@@ -188,11 +179,11 @@ geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
     double c = (x0-xc)*(x0-xc) + (y0-yc)*(y0-yc) + (z0-zc)*(z0-zc) - (sphereRadius*sphereRadius);
 
     double delta =(b*b) - (4*a*c);
+
     if(delta == 0){
         sol = -b/(2*a);
     }
     else{
-
         x1 = (-b -sqrt(delta))/(2*a);
         x2 = (-b +sqrt(delta))/(2*a);
         sol = x1;
@@ -201,7 +192,6 @@ geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
     x = Vx*sol + x0;
     y = Vy*sol + y0; 
     z = Vz*sol + z0;
-
 
     if( (z <= groundLevel) && (x < xc)){ // if the point is under the ground plane and behind the object
         sol = x2;
@@ -245,7 +235,6 @@ geometry_msgs::Quaternion DynamicOctomapMapping::computeNextCameraOrientation(){
     double xc = CBBX.x();
     double yc = CBBX.y();
     double zc = CBBX.z();
-
 
     roll = 0;
 
@@ -393,6 +382,8 @@ void DynamicOctomapMapping::printInfo(){
     cout << "BBXMin = " << BBXMin << endl; 
     cout << "BBXMax = " << BBXMax << endl; 
 }
+
+
 void DynamicOctomapMapping::printOctreeInfo(){
 
     for(OcTree::leaf_iterator it = tree_->begin_leafs(),end=tree_->end_leafs(); it!= end; ++it){
@@ -404,7 +395,9 @@ void DynamicOctomapMapping::printOctreeInfo(){
 
 
 
-
+/*######################################################################################
+################################        MAIN        ####################################
+######################################################################################*/
 
 int main(int argc, char** argv) 
 {

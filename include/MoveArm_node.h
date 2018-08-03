@@ -1,6 +1,6 @@
 
-#ifndef EXAMPLE_ROS_CLASS_H_
-#define EXAMPLE_ROS_CLASS_H_
+#ifndef MOVEARM_H_
+#define MOVEARM_H_
 
 #include <math.h>
 #include <stdlib.h>
@@ -8,32 +8,29 @@
 #include <vector>
 
 #include <ros/ros.h> 
-#include <std_msgs/Bool.h> 
+#include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
+
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/Quaternion.h>
 
-#include <std_msgs/String.h>
-#include <vector>
-#include <string>
 #include <tf/transform_listener.h>
 #include <tf/tf.h>
 
-
 #include <moveit_msgs/RobotState.h>
 #include <moveit_msgs/DisplayRobotState.h>
+#include <moveit_msgs/DisplayTrajectory.h>
+#include <moveit_msgs/AttachedCollisionObject.h>
+#include <moveit_msgs/CollisionObject.h>
+
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/robot_state/robot_state.h>
+
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <moveit_visual_tools/moveit_visual_tools.h>
-
-#include <moveit_msgs/DisplayTrajectory.h>
-
-#include <moveit_msgs/AttachedCollisionObject.h>
-#include <moveit_msgs/CollisionObject.h>
-
 
 
 class MoveArm{
@@ -48,8 +45,6 @@ class MoveArm{
 
 		geometry_msgs::Pose msg_;
 
-        
-        
         void initializeSubscribers(); 
 
         void subscriberCallback(const geometry_msgs::Pose & msg); 

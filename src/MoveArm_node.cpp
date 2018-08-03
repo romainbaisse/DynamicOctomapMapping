@@ -11,8 +11,6 @@ MoveArm::MoveArm(ros::NodeHandle* nodehandle):nh_(*nodehandle){
 
     initializeSubscribers();
     
-    // initializePublishers();
-
     msg_.position.x = -0.5;
     msg_.position.y = 0.45;
     msg_.position.z = 0.3;
@@ -32,28 +30,19 @@ void MoveArm::initializeSubscribers(){
 
 
 void MoveArm::subscriberCallback(const geometry_msgs::Pose &msg) {
-        /*cout << "position" << endl;
-        cout << "x = " << msg.position.x << "y = " << msg.position.y << "z = " << msg.position.z<< endl;
-        cout << "orientation" << endl;
-        cout << "x = " << msg.orientation.x << "y = " << msg.orientation.y << "z = " << msg.orientation.z << "w = "<< msg.orientation.w << endl;
-*/
-        msg_.position.x = msg.position.x;
-        msg_.position.y = msg.position.y;
-        msg_.position.z = msg.position.z;
-        msg_.orientation.x = msg.orientation.x;
-        msg_.orientation.y = msg.orientation.y;
-        msg_.orientation.z = msg.orientation.z;
-        msg_.orientation.w = msg.orientation.w;
 
+    msg_.position.x = msg.position.x;
+    msg_.position.y = msg.position.y;
+    msg_.position.z = msg.position.z;
+    msg_.orientation.x = msg.orientation.x;
+    msg_.orientation.y = msg.orientation.y;
+    msg_.orientation.z = msg.orientation.z;
+    msg_.orientation.w = msg.orientation.w;
 
 }
 
 
- 
-
 void MoveArm::move(){
-    //cout << "je suis la" << endl;
-
 
     ros::AsyncSpinner spinner(1);
     spinner.start();
@@ -73,8 +62,10 @@ void MoveArm::move(){
 
     ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
     
-    //###################################### add collision object ##################################################
 
+    /*##############################################################################################################
+    ################################        add collision object        ############################################
+    ##############################################################################################################*/
     // kuka bbx 
     moveit_msgs::CollisionObject kuka_bbx;
     kuka_bbx.header.frame_id = move_group.getPlanningFrame();
@@ -137,7 +128,9 @@ void MoveArm::move(){
     visual_tools.trigger();
 
 
-    //###################################### add collision object ##################################################
+    /*##############################################################################################################
+    ################################        compute cartesian path        ##########################################
+    ##############################################################################################################*/
 
     robot_state::RobotState start_state(*move_group.getCurrentState());
     geometry_msgs::PoseStamped state = move_group.getCurrentPose();
@@ -164,7 +157,7 @@ void MoveArm::move(){
     cout <<" target_pose = " << target_pose << endl;
     waypoints.push_back(target_pose);  // up and left
 
-    move_group.setMaxVelocityScalingFactor(1);
+    move_group.setMaxVelocityScalingFactor(0.1);
 
     moveit_msgs::RobotTrajectory trajectory;
     const double jump_threshold = 0.0;
@@ -172,17 +165,16 @@ void MoveArm::move(){
     double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
     ROS_INFO_NAMED("tutorial", "Visualizing plan 4 (Cartesian path) (%.2f%% acheived)", fraction * 100.0);
 
-
     plan.trajectory_ = trajectory;
-    /*cout << "if the path looks good enter one key and then enter" << endl;
+    cout << "if the path looks good enter one key and then enter" << endl;
     string text;
     cin >> text;
     if(!text.empty()){
         move_group.execute(plan);
-    }*/
-    move_group.execute(plan);
+    }
+    //move_group.execute(plan);
 
-    sleep(10);
+    sleep(5);
 
 }
 
@@ -192,6 +184,12 @@ void MoveArm::move2(){
         move();
     }
 }
+
+
+
+/*######################################################################################
+################################        MAIN        ####################################
+######################################################################################*/
 
 int main(int argc, char** argv) 
 {

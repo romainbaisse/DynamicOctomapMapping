@@ -19,7 +19,6 @@
   <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>rviz_visual_tools</build_depend>
   <build_depend>moveit_visual_tools</build_depend>
-  <build_depend>libpcl-all-dev</build_depend>
 
   <build_depend>octomap_msgs</build_depend>
   <build_depend>octomap</build_depend>
@@ -40,7 +39,6 @@
   <exec_depend>octomap_server</exec_depend>
   <exec_depend>tf</exec_depend>
 
-  <exec_depend>libpcl-all</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>moveit_ros_planning</exec_depend>
   <exec_depend>moveit_ros_move_group</exec_depend>

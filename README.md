@@ -1,6 +1,6 @@
 # DynamicOctomapMapping
 
-This repository contains two nodes allowing to use a UR10 and a kinectv2 camera to 3d mapping of a object being printed in 3d.
+This repository contains two nodes allowing to use a UR10 and a kinectv2 camera to 3d mapping an object being printed in 3d.
 
 How to use this package : 
 

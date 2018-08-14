@@ -11,11 +11,11 @@ MoveArm::MoveArm(ros::NodeHandle* nodehandle):nh_(*nodehandle){
 
     initializeSubscribers();
     
-    msg_.position.x = -0.5;
-    msg_.position.y = 0.45;
-    msg_.position.z = 0.3;
-    msg_.orientation = tf::createQuaternionMsgFromYaw(-3.14);
-    cout << "orientation : " << msg_.orientation << endl;
+/*    msg_.intermpose.position.x = -0.5;
+    msg_.intermpose.position.y = 0.45;
+    msg_.intermpose.position.z = 0.3;
+    msg_.intermpose.orientation = tf::createQuaternionMsgFromYaw(-3.14);
+    cout << "orientation : " << msg_.orientation << endl;*/
 
     move2();
 
@@ -29,16 +29,10 @@ void MoveArm::initializeSubscribers(){
 }
 
 
-void MoveArm::subscriberCallback(const geometry_msgs::Pose &msg) {
+void MoveArm::subscriberCallback(const dynamicoctomapmapping::pose &msg) {
 
-    msg_.position.x = msg.position.x;
-    msg_.position.y = msg.position.y;
-    msg_.position.z = msg.position.z;
-    msg_.orientation.x = msg.orientation.x;
-    msg_.orientation.y = msg.orientation.y;
-    msg_.orientation.z = msg.orientation.z;
-    msg_.orientation.w = msg.orientation.w;
-
+    msg_.intermpose = msg.intermpose;
+    msg_.goalpose = msg.goalpose;
 }
 
 
@@ -67,7 +61,7 @@ void MoveArm::move(){
     ################################        add collision object        ############################################
     ##############################################################################################################*/
     // kuka bbx 
-    moveit_msgs::CollisionObject kuka_bbx;
+   /* moveit_msgs::CollisionObject kuka_bbx;
     kuka_bbx.header.frame_id = move_group.getPlanningFrame();
 
     kuka_bbx.id = "box1";
@@ -81,7 +75,7 @@ void MoveArm::move(){
 
     geometry_msgs::Pose box_pose;
     box_pose.orientation.w = 1.0;
-    box_pose.position.x = -1.4;
+    box_pose.position.x = -1.7;
     box_pose.position.y = 0;
     box_pose.position.z = 0.64;
 
@@ -126,7 +120,7 @@ void MoveArm::move(){
     planning_scene_interface.addCollisionObjects(groundlimit_bbxs);
     //visual_tools.publishText(text_pose, "Add object", WHITE, XLARGE);
     visual_tools.trigger();
-
+*/
 
     /*##############################################################################################################
     ################################        compute cartesian path        ##########################################
@@ -146,22 +140,34 @@ void MoveArm::move(){
 
     geometry_msgs::Pose target_pose = start_pose;
 
-    target_pose.position.x = msg_.position.x;
-    target_pose.position.y = msg_.position.y;
-    target_pose.position.z = msg_.position.z;
-    target_pose.orientation.x = msg_.orientation.x;
-    target_pose.orientation.y = msg_.orientation.y;
-    target_pose.orientation.z = msg_.orientation.z;
-    target_pose.orientation.w = msg_.orientation.w;
+    target_pose.position.x = msg_.intermpose.position.x;
+    target_pose.position.y = msg_.intermpose.position.y;
+    target_pose.position.z = msg_.intermpose.position.z;
+    target_pose.orientation.x = msg_.intermpose.orientation.x;
+    target_pose.orientation.y = msg_.intermpose.orientation.y;
+    target_pose.orientation.z = msg_.intermpose.orientation.z;
+    target_pose.orientation.w = msg_.intermpose.orientation.w;
 
-    cout <<" target_pose = " << target_pose << endl;
+    cout <<" intermpose = " << target_pose << endl;
     waypoints.push_back(target_pose);  // up and left
 
-    move_group.setMaxVelocityScalingFactor(0.1);
+    target_pose.position.x = msg_.goalpose.position.x;
+    target_pose.position.y = msg_.goalpose.position.y;
+    target_pose.position.z = msg_.goalpose.position.z;
+    target_pose.orientation.x = msg_.goalpose.orientation.x;
+    target_pose.orientation.y = msg_.goalpose.orientation.y;
+    target_pose.orientation.z = msg_.goalpose.orientation.z;
+    target_pose.orientation.w = msg_.goalpose.orientation.w;
+
+    cout <<" goalpose = " << target_pose << endl;
+    waypoints.push_back(target_pose);  
+
+   /* move_group.setMaxVelocityScalingFactor(0.1);
+    move_group.setMaxAccelerationScalingFactor(0.1);*/
 
     moveit_msgs::RobotTrajectory trajectory;
-    const double jump_threshold = 0.0;
-    const double eef_step = 0.01;
+    const double jump_threshold = 0;
+    const double eef_step = 0.001;
     double fraction = move_group.computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
     ROS_INFO_NAMED("tutorial", "Visualizing plan 4 (Cartesian path) (%.2f%% acheived)", fraction * 100.0);
 

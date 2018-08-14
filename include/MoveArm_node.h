@@ -31,7 +31,7 @@
 
 #include <rviz_visual_tools/rviz_visual_tools.h>
 #include <moveit_visual_tools/moveit_visual_tools.h>
-
+#include <dynamicoctomapmapping/pose.h>
 
 class MoveArm{
 
@@ -43,11 +43,11 @@ class MoveArm{
 
         ros::Subscriber minimal_subscriber_; 
 
-		geometry_msgs::Pose msg_;
+		dynamicoctomapmapping::pose msg_;
 
         void initializeSubscribers(); 
 
-        void subscriberCallback(const geometry_msgs::Pose & msg); 
+        void subscriberCallback(const dynamicoctomapmapping::pose & msg); 
 
 		void move();
 		

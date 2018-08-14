@@ -32,7 +32,7 @@
 #include <Eigen/Geometry>
 #include <Eigen/Dense>
 
-
+#include <dynamicoctomapmapping/pose.h>
 class DynamicOctomapMapping{
 
     public:
@@ -67,7 +67,8 @@ class DynamicOctomapMapping{
 
         octomap::point3d lastBestNode;
 
-        octomap::point3d lastCameraPose;
+        geometry_msgs::Point lastCameraPose;
+
 
         double *pos;
 
@@ -121,13 +122,15 @@ class DynamicOctomapMapping{
         void updateNodesInBBX(const octomap::point3d& min,const octomap::point3d& max, bool occupied);
 
         // compute the position of the camera on a sphere centered on the CBBX
-        geometry_msgs::Point computeNextCameraPose();
+        geometry_msgs::Point computeNextCameraPose(octomap::point3d p);
 
         // compute the orientation of the camera 
-        geometry_msgs::Quaternion computeNextCameraOrientation();
+        geometry_msgs::Quaternion computeNextCameraOrientation(geometry_msgs::Point p);
 
         // publish the position + orientation of the camera
         void publishNextCameraPoseandOrientation();
+
+        void publishNextCameraPoseandOrientationtest();
 
 }; 
 

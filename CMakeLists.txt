@@ -3,15 +3,24 @@ project(dynamicoctomapmapping)
 add_compile_options(-std=c++11)
 
 ## Find catkin and any catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg octomap octomap_ros octomap_msgs geometry_msgs moveit_ros_control_interface moveit_ros_move_group moveit_ros_planning moveit_ros_planning_interface sensor_msgs moveit_visual_tools rviz_visual_tools tf
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs genmsg octomap octomap_ros octomap_msgs geometry_msgs moveit_ros_control_interface moveit_ros_move_group moveit_ros_planning moveit_ros_planning_interface sensor_msgs moveit_visual_tools rviz_visual_tools tf message_generation
 )
 
 ## Declare ROS messages and services
+add_message_files(
+  FILES
+  pose.msg
+)
 
 ## Generate added messages and services
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+)
 
 ## Declare a catkin package
-catkin_package()
+catkin_package( CATKIN_DEPENDS message_runtime)
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 include_directories(include ${octomap_INCLUDE_DIRS})

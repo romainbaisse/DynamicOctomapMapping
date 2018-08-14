@@ -23,9 +23,13 @@ DynamicOctomapMapping::DynamicOctomapMapping(ros::NodeHandle* nodehandle,  point
     lastLayerLevel = 0.0;
     resolution = 0.005;
     sphereRadius = 1;
-    lastBestNode = octomath::Vector3(-0.9, -0.25, 0.1);
-    lastCameraPose = octomath::Vector3(0.2,0.2,0.2);
+    lastBestNode = octomath::Vector3(-1.3, -0.25, 0.12);
+    lastCameraPose.x = -0.6;
+    lastCameraPose.y = -0.6;
+    lastCameraPose.z = 0.2;
+
     computeCBBX();
+    printInfo();
     //computeNextCameraOrientation();
     //Some tests
 
@@ -46,14 +50,14 @@ void DynamicOctomapMapping::writeOctomapFile(){
 void DynamicOctomapMapping::initializeSubscribers(){
 
     ROS_INFO("Initializing Subscribers");
-    minimal_subscriber_ = nh_.subscribe("/octomap_binary", 1, &DynamicOctomapMapping::subscriberCallback,this);  
+    minimal_subscriber_ = nh_.subscribe("/octomap_binary", 1, &DynamicOctomapMapping::subscriberCallback,this); 
 }
 
 
 void DynamicOctomapMapping::initializePublishers(){
 
     ROS_INFO("Initializing Publishers");
-    minimal_publisher_ = nh_.advertise<geometry_msgs::Pose>("new_camera_pose", 1, true); 
+    minimal_publisher_ = nh_.advertise<dynamicoctomapmapping::pose>("new_camera_pose", 1, true); 
 }
 
 
@@ -144,6 +148,7 @@ void DynamicOctomapMapping::find_smallest_occupancy_node(){
             double occ = it->getOccupancy();
             if (isNewLayer(z) /*&& ((z-lastLayerLevel) <=(2*resolution))*/){
                 lastLayerLevel = z;
+                //cout << "z = " << z << endl;
                 if(occ < minOccupancy){
                     minOccupancy = occ;
                     newBestNode = it.getCoordinate();
@@ -159,12 +164,12 @@ void DynamicOctomapMapping::find_smallest_occupancy_node(){
 }
 
 
-geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
+geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(octomap::point3d p){
     geometry_msgs::Point point;
     double sol, x1, x2, x, y, z;
-    double x0 = lastBestNode.x();
-    double y0 = lastBestNode.y();
-    double z0 = lastBestNode.z();
+    double x0 = p.x();
+    double y0 = p.y();
+    double z0 = p.z();
 
     double xc = CBBX.x();
     double yc = CBBX.y();
@@ -176,7 +181,7 @@ geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
 
     double a = Vx*Vx + Vy*Vy + Vz*Vz;
     double b = 2 * ((Vx*Vx) + (Vy*Vy) + (Vz*Vz));
-    double c = (x0-xc)*(x0-xc) + (y0-yc)*(y0-yc) + (z0-zc)*(z0-zc) - (sphereRadius*sphereRadius);
+    double c = Vx*Vx + Vy*Vy + Vz*Vz - (sphereRadius*sphereRadius);
 
     double delta =(b*b) - (4*a*c);
 
@@ -212,25 +217,23 @@ geometry_msgs::Point DynamicOctomapMapping::computeNextCameraPose(){
     point.x = x;
     point.y = y;
     point.z = z;
-    lastCameraPose.x() = point.x;
-    lastCameraPose.y() = point.y;
-    lastCameraPose.z() = point.z;
 
-    cout << "new camera position = ( " << x << "," << y << "," << z << ")" << endl;
+
+    //cout << "new camera position = ( " << x << "," << y << "," << z << ")" << endl;
 
     return point;
 }
 
 
-geometry_msgs::Quaternion DynamicOctomapMapping::computeNextCameraOrientation(){
+geometry_msgs::Quaternion DynamicOctomapMapping::computeNextCameraOrientation(geometry_msgs::Point p){
 
     geometry_msgs::Quaternion orientation;
     //Roll pitch and yaw in Radians
     float pitch, roll, yaw, alpha, beta, gamma;
 
-    double xcam = lastCameraPose.x();
-    double ycam = lastCameraPose.y();
-    double zcam = lastCameraPose.z();
+    double xcam = p.x;
+    double ycam = p.y;
+    double zcam = p.z;
 
     double xc = CBBX.x();
     double yc = CBBX.y();
@@ -291,17 +294,58 @@ geometry_msgs::Quaternion DynamicOctomapMapping::computeNextCameraOrientation(){
 
 
 void DynamicOctomapMapping::publishNextCameraPoseandOrientation(){
-    geometry_msgs::Pose pose;
-    pose.position = computeNextCameraPose();
-    pose.orientation = computeNextCameraOrientation();
+    dynamicoctomapmapping::pose pose;
+    geometry_msgs::Point newCameraPose = lastCameraPose;
+
+    pose.goalpose.position = computeNextCameraPose(lastBestNode);
+    newCameraPose.x = pose.goalpose.position.x;
+    newCameraPose.y = pose.goalpose.position.y;
+    newCameraPose.z = pose.goalpose.position.z;
+
+    cout << "lastCameraPose = " << lastCameraPose << "\n newCameraPose = " << newCameraPose << endl;
+    octomap::point3d p;
+    p.x() = (lastCameraPose.x + newCameraPose.x)/2;
+    p.y() = (lastCameraPose.y + newCameraPose.y)/2;
+    p.z() = (lastCameraPose.z + newCameraPose.z)/2;
+    pose.intermpose.position = computeNextCameraPose(p);
+
+    lastCameraPose = newCameraPose;
+
+    geometry_msgs::Point p2;
+    p2.x = p.x();
+    p2.y = p.y();
+    p2.z = p.z();
+
+    pose.goalpose.orientation = computeNextCameraOrientation(lastCameraPose);
+    pose.intermpose.orientation = computeNextCameraOrientation(p2);
 
     minimal_publisher_.publish(pose);
+}
 
+void DynamicOctomapMapping::publishNextCameraPoseandOrientationtest(){
+    dynamicoctomapmapping::pose pose;
+    geometry_msgs::Point initialCameraPose;
+    geometry_msgs::Point finalCameraPose;
+
+    initialCameraPose.x = -0.3;
+    initialCameraPose.y = 0.2;
+    initialCameraPose.z = 0.3;
+
+    finalCameraPose.x = -0.5;
+    finalCameraPose.y = 0.4;
+    finalCameraPose.z = 0.3;
+
+    pose.intermpose.position = initialCameraPose;
+    pose.intermpose.orientation = computeNextCameraOrientation(initialCameraPose);
+    pose.goalpose.position = finalCameraPose;
+    pose.goalpose.orientation = computeNextCameraOrientation(finalCameraPose);
+    minimal_publisher_.publish(pose);
+    sleep(20);
 }
 
 bool DynamicOctomapMapping::isNewLayer(double layer){
 
-    if(layer >= (lastLayerLevel + resolution)){
+    if(layer >= (lastLayerLevel)){
         //ROS_INFO("New layer detected, Z = %f", layer );
         return true;
     }
@@ -409,8 +453,8 @@ int main(int argc, char** argv)
     // point3d BBXMin = point3d(-1.5,-0.25,-0.055);
     // point3d BBXMax = point3d(-0.9,0.25,0.2);
 
-    point3d BBXMin = point3d(-1.5,-0.45,0.10);
-    point3d BBXMax = point3d(-0.9,0.2,0.15);
+    point3d BBXMin = point3d(-1.6,-0.5,0.10);
+    point3d BBXMax = point3d(-1.25,0.5,0.18);
 
 
     ROS_INFO("main: instantiating an object of type DynamicOctomapMapping");

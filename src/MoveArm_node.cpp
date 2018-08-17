@@ -61,7 +61,7 @@ void MoveArm::move(){
     ################################        add collision object        ############################################
     ##############################################################################################################*/
     // kuka bbx 
-   /* moveit_msgs::CollisionObject kuka_bbx;
+    moveit_msgs::CollisionObject kuka_bbx;
     kuka_bbx.header.frame_id = move_group.getPlanningFrame();
 
     kuka_bbx.id = "box1";
@@ -120,7 +120,7 @@ void MoveArm::move(){
     planning_scene_interface.addCollisionObjects(groundlimit_bbxs);
     //visual_tools.publishText(text_pose, "Add object", WHITE, XLARGE);
     visual_tools.trigger();
-*/
+
 
     /*##############################################################################################################
     ################################        compute cartesian path        ##########################################
